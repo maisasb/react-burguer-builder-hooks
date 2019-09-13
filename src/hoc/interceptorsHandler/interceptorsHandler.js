@@ -1,60 +1,33 @@
-import React, { Component } from 'react';
+import React from 'react';
 import Modal from '../../components/UI/Modal/Modal';
 import Content from '../Content/Content';
 import Spinner from '../../components/UI/Spinner/Spinner';
+import useInterceptorsHandler from '../../hooks/interceptors-handler';
 
 const interceptorsHandler = (WrappedComponent, axios) => {
-    return class extends Component {
+    return props => {
 
-        state = { 
-            error: null,
-            loading: false
+        const {error, loading} = useInterceptorsHandler(axios);
+      console.log(error);
+        let spinner = null;
+        if (loading){
+            spinner = <Spinner />;
         }
-
-        constructor(props) {
-            super(props);
-            this.reqInterceptor = axios.interceptors.request.use(req => {
-                this.setState({error: null, loading: true});                
-                return req;
-            })
-            this.resInterceptor = axios.interceptors.response.use(res => {
-                this.setState({loading: false});
-                return res;
-            }, error => {
-                this.setState({error: error, loading: false});                
-            });
-        }
-
-        componentWillUnmount() {
-            axios.interceptors.request.eject(this.reqInterceptor);
-            axios.interceptors.response.eject(this.resInterceptor);
-        }
-
-        errorConfirmedHandler = () => {
-            this.setState({error: null});
-        }
-
-        render() {
-
-            let spinner = null;
-            if (this.state.loading){
-                spinner = <Spinner />;
-            }
+    
+        return (
+            <Content>
+                {spinner}
+                <Modal 
+                    show={error.errorMessage}
+                    modalClosed={error.clearError}>
+                    {error ? error.message : null}
+                </Modal>
+                <WrappedComponent {...props} />
+            </Content>
+        );
         
-            return (
-                <Content>
-                    {spinner}
-                    <Modal 
-                        show={this.state.error}
-                        modalClosed={this.errorConfirmedHandler}>
-                        {this.state.error ? this.state.error.message : null}
-                    </Modal>
-                    <WrappedComponent {...this.props} />
-                </Content>
-            );
-            
-        }
     }
+    
     
 }
 
